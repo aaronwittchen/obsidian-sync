@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: couchdb
+  namespace: obsidian-livesync
+  labels:
+    app: couchdb
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: couchdb
+  template:
+    metadata:
+      labels:
+        app: couchdb
+    spec:
+      serviceAccountName: couchdb
+      securityContext:
+        fsGroup: 5984
+        runAsNonRoot: true
+        runAsUser: 5984
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: couchdb
+          image: couchdb:3.5
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5984
+              name: http
+              protocol: TCP
+          env:
+            - name: COUCHDB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-credentials
+                  key: username
+            - name: COUCHDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-credentials
+                  key: password
+            - name: COUCHDB_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: couchdb-credentials
+                  key: secret
+            - name: TZ
+              value: 'UTC'
+          resources:
+            requests:
+              memory: '512Mi'
+              cpu: '250m'
+            limits:
+              memory: '2Gi'
+              cpu: '2000m'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - curl -f -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://127.0.0.1:5984/_up
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - curl -f -u ${COUCHDB_USER}:${COUCHDB_PASSWORD} http://127.0.0.1:5984/_up
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 5
+          volumeMounts:
+            - name: couchdb-data
+              mountPath: /opt/couchdb/data
+            - name: couchdb-config
+              mountPath: /opt/couchdb/etc/local.d
+      volumes:
+        - name: couchdb-data
+          persistentVolumeClaim:
+            claimName: couchdb-data-pvc
+        - name: couchdb-config
+          persistentVolumeClaim:
+            claimName: couchdb-config-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: couchdb
+  namespace: obsidian-livesync
+  labels:
+    app: couchdb
+spec:
+  type: ClusterIP
+  selector:
+    app: couchdb
+  ports:
+    - name: http
+      port: 5984
+      targetPort: 5984
+      protocol: TCP

@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: obsidian-livesync
+
+resources:
+  - ../../base
+
+# Use Longhorn storage class with encryption
+patches:
+  - target:
+      kind: PersistentVolumeClaim
+      name: couchdb-data-pvc
+    patch: |-
+      - op: add
+        path: /spec/storageClassName
+        value: longhorn-encrypted
+  - target:
+      kind: PersistentVolumeClaim
+      name: couchdb-config-pvc
+    patch: |-
+      - op: add
+        path: /spec/storageClassName
+        value: longhorn-encrypted

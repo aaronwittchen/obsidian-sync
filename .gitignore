@@ -1,0 +1,46 @@
+# Secrets - NEVER commit unencrypted
+# base/secrets.yaml is SOPS encrypted and safe to commit
+!base/secrets.yaml
+*-secret.yaml
+.env
+.env.*
+*.env
+
+# TLS certificates and keys
+*.key
+*.crt
+*.pem
+*.cert
+tls.key
+tls.crt
+
+# Backup files
+*.sql
+*.sql.gz
+backups/
+
+# Local configuration overrides
+local-*.yaml
+*-local.yaml
+
+# Kustomize output
+kustomize-build/
+output/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Old files to be removed
+obsidian-livesync-k8s/
+notes.md
+steps.md
