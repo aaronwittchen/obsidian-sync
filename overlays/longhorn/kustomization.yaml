@@ -6,7 +6,7 @@ namespace: obsidian-livesync
 resources:
   - ../../base
 
-# Use Longhorn storage class with encryption
+# Use Longhorn storage class
 patches:
   - target:
       kind: PersistentVolumeClaim
@@ -14,11 +14,11 @@ patches:
     patch: |-
       - op: add
         path: /spec/storageClassName
-        value: longhorn-encrypted
+        value: longhorn
   - target:
       kind: PersistentVolumeClaim
       name: couchdb-config-pvc
     patch: |-
       - op: add
         path: /spec/storageClassName
-        value: longhorn-encrypted
+        value: longhorn
